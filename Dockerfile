@@ -7,17 +7,12 @@ FROM debian:buster
 WORKDIR /tmp/
 #maintenant il faut connecter un shel???
 
-
-
 #puis installer nginx (avec des RUN????????)
 RUN apt update -y &&\
  apt upgrade -y &&\
  apt install nginx -y &&\
  apt-get install -y gnupg2 wget apt-utils
 #remplacer le fichier de config existant avec un fichier cree avec mes configs (ssl)
-
-
-
 
 #telecharger mySQL (creer un utilisateur a qui on donne ts les privileges (root))
 #https://unix.stackexchange.com/questions/536538/how-can-i-install-mysql-on-debian-10-buster
@@ -29,16 +24,7 @@ RUN apt-key add /tmp/sqlkey.pub \
 && debconf-set-selections << "mysql-community-server mysql-community-server/root-pass password password" \
 && debconf-set-selections << "mysql-community-server mysql-community-server/re-root-pass password password" \
 && export DEBIAN_FRONTEND=noninteractive && apt-get -y install mysql-server
-
 #creer une base de donnees pour wordpress
-
-
-#il faut utiliser ADD pour installer Wrodpress depuis sources
-#installer wordpress https://kifarunix.com/install-wordpress-5-with-nginx-on-debian-10-buster/
-#??? https://www.openssl.org/source/
-
-
-
 
 #config nginx avec php (phpmyadmin) pour que le serveur puisse interpreter du php (le transformer en html)
 #https://kifarunix.com/install-phpmyadmin-with-nginx-on-debian-10-buster/
@@ -47,6 +33,25 @@ RUN apt install -y php-curl php-gd php-intl php-mbstring php-soap php-xml php-xm
 && mkdir /var/www/html/phpmyadmin \
 && tar xzf phpMyAdmin-4.9.0.1-english.tar.gz --strip-components=1 -C /var/www/html/phpmyadmin
 
+#il faut utiliser ADD pour installer Wrodpress depuis sources
+#installer wordpress https://kifarunix.com/install-wordpress-5-with-nginx-on-debian-10-buster/
+#??? https://www.openssl.org/source/
+COPY srcs/config /etc/nginx/sites-available
+RUN ln -s /etc/nginx/sites-available/config /etc/nginx/sites-enabled \
+&& service nginx reload \
+&& wget https://wordpress.org/latest.tar.gz -P /tmp \
+&& mkdir /var/www/html/wordpression \
+&& tar xzf /tmp/latest.tar.gz --strip-components=1 -C /var/www/html/wordpression
+#&& mv /var/www/html/wordpression/wp-config.php /var/www/html/wordpression/wp-config-sample.php
+COPY srcs/wp-config.php /var/www/html/wordpression
+RUN chown -R www-data:www-data /var/www/html/wordpression
+
+
 #will strt commands that will create sql server https://kifarunix.com/install-wordpress-5-with-nginx-on-debian-10-buster/
 COPY srcs/exec.sh /tmp/
 ENTRYPOINT [ "/bin/sh", "/tmp/exec.sh"]
+
+#CMD service nginx start			&& \
+#	service mysql start 		&& \
+#	service php7.3-fpm start	&& \
+#	tail -f /dev/null

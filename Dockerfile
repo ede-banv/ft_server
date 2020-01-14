@@ -18,17 +18,12 @@ RUN apt update -y &&\
 #https://unix.stackexchange.com/questions/536538/how-can-i-install-mysql-on-debian-10-buster
 #here i use from https://tecadmin.net/install-mysql-server-on-debian9-stretch/ (but options to choose from)
 COPY srcs/sqlkey.pub /tmp/
-RUN apt-key add /tmp/sqlkey.pub \
-&& echo "deb http://repo.mysql.com/apt/debian/ buster mysql-5.7" | tee /etc/apt/sources.list.d/docker.list \
-&& apt-get update \
-&& debconf-set-selections << "mysql-community-server mysql-community-server/root-pass password password" \
-&& debconf-set-selections << "mysql-community-server mysql-community-server/re-root-pass password password" \
-&& export DEBIAN_FRONTEND=noninteractive && apt-get -y install mysql-server
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install mariadb-server
 #creer une base de donnees pour wordpress
 
 #config nginx avec php (phpmyadmin) pour que le serveur puisse interpreter du php (le transformer en html)
 #https://kifarunix.com/install-phpmyadmin-with-nginx-on-debian-10-buster/
-RUN apt install -y php-curl php-gd php-intl php-mbstring php-soap php-xml php-xmlrpc php-zip \
+RUN apt install -y php php-fpm php-mysqli php-pear php-mbstring	php-gettext php-common php-phpseclib php-mysql \
 && wget https://files.phpmyadmin.net/phpMyAdmin/4.9.0.1/phpMyAdmin-4.9.0.1-english.tar.gz \
 && mkdir /var/www/html/phpmyadmin \
 && tar xzf phpMyAdmin-4.9.0.1-english.tar.gz --strip-components=1 -C /var/www/html/phpmyadmin
@@ -38,20 +33,24 @@ RUN apt install -y php-curl php-gd php-intl php-mbstring php-soap php-xml php-xm
 #??? https://www.openssl.org/source/
 COPY srcs/config /etc/nginx/sites-available
 RUN ln -s /etc/nginx/sites-available/config /etc/nginx/sites-enabled \
-&& service nginx reload \
+&& rm -f /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default \
 && wget https://wordpress.org/latest.tar.gz -P /tmp \
 && mkdir /var/www/html/wordpression \
 && tar xzf /tmp/latest.tar.gz --strip-components=1 -C /var/www/html/wordpression
-#&& mv /var/www/html/wordpression/wp-config.php /var/www/html/wordpression/wp-config-sample.php
 COPY srcs/wp-config.php /var/www/html/wordpression
 RUN chown -R www-data:www-data /var/www/html/wordpression
 
 
 #will strt commands that will create sql server https://kifarunix.com/install-wordpress-5-with-nginx-on-debian-10-buster/
-COPY srcs/exec.sh /tmp/
-ENTRYPOINT [ "/bin/sh", "/tmp/exec.sh"]
+# RUN service mysql start && \
+#     mysql -u root -e "create database wordpression;" && \
+#     mysql -u root -e "create user depression@localhost identified by 'owowhatsthis';" && \
+#     mysql -u root -e "grant all privileges on wordpression.* to depression@localhost;"
 
-#CMD service nginx start			&& \
-#	service mysql start 		&& \
-#	service php7.3-fpm start	&& \
-#	tail -f /dev/null
+COPY srcs/exec.sh /tmp
+ENTRYPOINT [ "/bin/sh", "/tmp/exec.sh" ]
+
+# CMD service nginx start			&& \
+# 	service php7.3-fpm start	&& \
+# 	service mysql start 		&& \
+# 	tail -f /dev/null

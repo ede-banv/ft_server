@@ -1,12 +1,26 @@
 server {
 	listen 80;
-	root /var/www/html/wordpression;
+	listen [::]:80;
+	root /var/www/html/;
 	server_name wordpression;
 
+	autoindex on;
 	location / {
 	    index	index.php index.html;
 	    try_files	$uri $uri/ /index.php?$args;
 	}	
+
+	location /wordpression {
+			index index.php;
+			location ~* ^.+.(jpg|jpeg|gif|css|png|js|ico|xml)$ {
+					access_log off;
+					expires 30d;
+			}
+		
+			location ~ /\.ht {
+					deny all;
+			}
+	}
 
 	location ~ \.php$ {
 		include snippets/fastcgi-php.conf;

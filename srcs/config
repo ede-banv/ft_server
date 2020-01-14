@@ -1,8 +1,22 @@
 server {
-	listen 80;
-	listen [::]:80;
-	root /var/www/html/;
-	server_name wordpression;
+    listen 80;
+    listen [::]:80;
+
+    server_name localhost www.localhost;
+
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+	listen 443 ssl;
+    listen [::]:443 ssl;
+    ssl_certificate /tmp/domain.crt;
+	ssl_certificate_key /tmp/domain.key;
+
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+
+    server_name localhost www.localhost;
 
 	autoindex on;
 	location / {

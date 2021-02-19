@@ -17,7 +17,7 @@ RUN apt update -y &&\
 # MySQL install #
 #################
 COPY srcs/sqlkey.pub /tmp/
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install mariadb-server
+RUN apt install -y mariadb-server
 
 
 ######################
